@@ -15,11 +15,15 @@ import java.util.UUID;
 @Service
 public class OrderServiceImpl implements OrderService {
 
+    /* DDDDD - dependency inversion (конкретный CsvOrderRepository вместо интерфейса, зависит
+    private final CsvOrderRepository orderRepository;
+     */
     private final OrderRepository orderRepository;
     private final PricingStrategy pricingStrategy;
     private final VehicleService vehicleService;
 
-    public OrderServiceImpl(OrderRepository orderRepository,
+    public OrderServiceImpl( /* CsvOrderRepository orderRepository, */
+                            OrderRepository orderRepository,
                             PricingStrategy pricingStrategy,
                             VehicleService vehicleService) {
         this.orderRepository = orderRepository;
@@ -30,7 +34,24 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order createOrder(String from, String to, double weight) {
         Order order = new Order(UUID.randomUUID().toString(), from, to, weight, OrderStatus.CREATED, null);
+
         orderRepository.save(order);
+
+        /* SSSSS - single responsibility (создание заказа твечает за запись в файл)
+        try {
+        Path file = Paths.get("orders.csv");
+        String line = String.format(Locale.US, "%s,%s,%s,%.2f,%s,%s",
+                order.getId(), order.getFrom(), order.getTo(),
+                order.getWeight(), order.getStatus().name(),
+                order.getVehicleId() != null ? order.getVehicleId() : "");
+        Files.write(file, Collections.singletonList(line),
+                StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+    } catch (IOException e) {
+        throw new RuntimeException("Ошибка записи", e);
+    }
+
+         */
+
         return order;
     }
 
@@ -68,6 +89,15 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
         return pricingStrategy.calculate(order);
+
+        /* OOOOO (open-closed, хардкод в сервисе)
+        if (order.getWeight() > 500) {
+            return order.getWeight() * 15;
+        } else if (order.getWeight() > 100) {
+            return order.getWeight() * 12;
+        } else {
+            return order.getWeight() * 10;
+        }*/
     }
 
     @Override

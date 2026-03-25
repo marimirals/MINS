@@ -47,6 +47,14 @@ public class CsvOrderRepository implements OrderRepository {
         writeAllLines(lines);
     }
 
+    /* LLLLL - Liskov Substitution (сужение предусловий)
+    public void save(Order order) {
+        if (order.getWeight() > 1000) {
+            throw new IllegalArgumentException("Слишком тяжёлый!");
+        }
+    }
+    */
+
     @Override
     public Optional<Order> findById(String id) {
         return readAllLines().stream()
@@ -136,4 +144,33 @@ public class CsvOrderRepository implements OrderRepository {
             return null;
         }
     }
+
+/* IIIII - part2
+    @Override
+    public void sendEmail(Order order) {
+        // заглушка
+    }
+
+    @Override
+    public void generatePDF(Order order) {
+        // заглушка
+    }
+
+    @Override
+    public void deleteAll() {
+        // заглушка
+    }
+
+    @Override
+    public List<Order> findByStatus(OrderStatus status) {
+        return findAll().stream()
+                .filter(o -> o.getStatus() == status)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void exportToExcel(String filename) {
+        // заглушка
+    }
+*/
 }
