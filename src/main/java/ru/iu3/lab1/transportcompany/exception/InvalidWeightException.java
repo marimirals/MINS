@@ -1,7 +1,7 @@
 package ru.iu3.lab1.transportcompany.exception;
 
-public class InvalidWeightException extends RuntimeException {
-  public InvalidWeightException(String message) {
-    super(message);
-  }
+public class InvalidWeightException extends TransportCompanyException {
+    public InvalidWeightException(double weight) {
+        super("Недопустимый вес: " + weight + " кг. Вес заказа должен быть от 1 до 1000 кг.");
+    }
 }

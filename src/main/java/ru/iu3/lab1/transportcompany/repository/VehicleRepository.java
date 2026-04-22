@@ -8,5 +8,4 @@ public interface VehicleRepository {
     void save(Vehicle vehicle);
     Optional<Vehicle> findById(String id);
     List<Vehicle> findAll();
-    Optional<Vehicle> findByType(String type);
 }
