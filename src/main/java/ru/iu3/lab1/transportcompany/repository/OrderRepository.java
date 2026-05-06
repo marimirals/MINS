@@ -10,7 +10,9 @@ public interface OrderRepository {
     Optional<Order> findById(String id);
     List<Order> findAll();
 
-    /* IIIII - interface segregation (не дело репозитория -> нарушение)
+    // IIIII - interface segregation, не должны зависеть от методов, которые они не используют.
+    // (не дело репозитория, имплементирующие будут зависеть от того от чего не надо)
+    /*
     void sendEmail(Order order);
     void generatePDF(Order order);
     void deleteAll();

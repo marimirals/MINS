@@ -22,7 +22,9 @@ import java.util.UUID;
 @Service
 public class OrderServiceImpl implements OrderService {
 
-    /* DDDDD - dependency inversion (конкретный CsvOrderRepository вместо интерфейса, зависит
+    // DDDDD - dependency inversion - зависит от абстракций а не от конкретных реализаций.
+    // (конкретный CsvOrderRepository вместо интерфейса, зависит
+    /*
     private final CsvOrderRepository orderRepository;
      */
     private final OrderRepository orderRepository;

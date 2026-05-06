@@ -38,7 +38,7 @@ public class ConsoleRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        System.out.println("=== Транспортная компания ===\n");
+        System.out.println("=== Транспортная компания ===");
         while (true) {
             printMenu();
             int choice = getIntInput("Выбор: ");
@@ -84,11 +84,11 @@ public class ConsoleRunner implements CommandLineRunner {
         double weight = getDoubleInput("Вес (кг): ");
         try {
             Order order = orderService.createOrder(from, to, weight);
-            System.out.println("✓ Заказ создан! ID: " + order.getId());
+            System.out.println("Заказ создан! ID: " + order.getId());
         } catch (TransportCompanyException e) {
-            System.out.println("✗ " + e.getMessage());
+            System.out.println(e.getMessage());
         } catch (Exception e) {
-            System.out.println("✗ Ошибка: " + e.getMessage());
+            System.out.println(e.getMessage());
         }
     }
 
@@ -154,9 +154,9 @@ public class ConsoleRunner implements CommandLineRunner {
             vehicleService.getAllVehicles().forEach(v ->
                     System.out.println(v.getId() + " - " + v.getType()));
         } catch (TransportCompanyException e) {
-            System.out.println("✗ " + e.getMessage());
+            System.out.println(e.getMessage());
         } catch (Exception e) {
-            System.out.println("✗ Ошибка: " + e.getMessage());
+            System.out.println(e.getMessage());
         }
     }
 

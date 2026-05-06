@@ -13,7 +13,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * GOD CLASS. Нарушает single responsibility, open closed. Делает выборку данных, валидацию, финансовые расчёты,
+ * GOD CLASS. Нарушает single responsibility, open closed. тесты, магические числа, хардкод, эксепшоны, администрирование.
+ * Делает выборку данных, валидацию, финансовые расчёты,
  * строковое форматирование, работу с файловой системой, логирование и обработку ошибок.
  */
 @Service
