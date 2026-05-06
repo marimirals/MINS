@@ -144,11 +144,6 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        // Используем паттерн State
-        if (order.getState() == null) {
-            initializeState(order);
-        }
-
         order.getState().cancel(order);
         orderRepository.save(order);
     }
