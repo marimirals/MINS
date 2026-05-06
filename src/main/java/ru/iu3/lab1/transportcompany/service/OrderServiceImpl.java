@@ -70,16 +70,19 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
+        // Проверяем существование транспорта
         vehicleService.getVehicleById(vehicleId);
-        order.setVehicleId(vehicleId);
 
-        if (order.getState() != null) {
-            order.getState().next(order);
-        } else {
-            // Если state не инициализирован
-            order.setStatus(OrderStatus.IN_PROGRESS);
-            order.setState(new InProgressState());
+        // Проверяем через состояние, можно ли назначать транспорт
+        if (!order.getState().canAssignVehicle()) {
+            throw new IllegalStateException(
+                    "Нельзя назначить транспорт на заказ в состоянии: " + order.getState().getName()
+            );
         }
+
+        // Назначаем транспорт и переходим в следующее состояние
+        order.setVehicleId(vehicleId);
+        order.getState().next(order);
 
         orderRepository.save(order);
     }

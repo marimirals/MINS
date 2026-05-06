@@ -8,4 +8,7 @@ public interface OrderState {
     String getName();                 // Имя состояния
     boolean canCancel();              // Можно ли отменить
     boolean canProceed();             // Можно ли перейти дальше
+    default boolean canAssignVehicle() {
+        return false; // по умолчанию нельзя
+    }
 }

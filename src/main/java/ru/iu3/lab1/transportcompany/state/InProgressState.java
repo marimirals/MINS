@@ -6,6 +6,11 @@ import ru.iu3.lab1.transportcompany.model.OrderStatus;
 public class InProgressState implements OrderState {
 
     @Override
+    public boolean canAssignVehicle() {
+        return false; // Транспорт уже назначен
+    }
+
+    @Override
     public void next(Order order) {
         // В пути -> Доставлен
         order.setStatus(OrderStatus.DELIVERED);

@@ -6,9 +6,14 @@ import ru.iu3.lab1.transportcompany.model.OrderStatus;
 public class NewOrderState implements OrderState {
 
     @Override
+    public boolean canAssignVehicle() {
+        return true; // Новый заказ — можно назначать транспорт
+    }
+
+    @Override
     public void next(Order order) {
         // Проверяем, что транспорт назначен
-        if (order.getVehicleId() == null || order.getVehicleId().isEmpty()) {
+        if (!canAssignVehicle() || order.getVehicleId().isEmpty()) {
             throw new IllegalStateException("Нельзя перевести заказ в выполнение без назначенного транспорта!");
         }
 
