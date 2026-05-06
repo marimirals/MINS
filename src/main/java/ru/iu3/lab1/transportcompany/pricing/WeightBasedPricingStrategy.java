@@ -4,10 +4,10 @@ import org.springframework.stereotype.Component;
 import ru.iu3.lab1.transportcompany.model.Order;
 
 @Component
-public class DefaultPricingStrategy implements PricingStrategy {
-
+public class WeightBasedPricingStrategy implements PricingStrategy {
     @Override
     public double calculate(Order order) {
-        return order.getWeight() * 10; // базовый тариф
+        // Базовый тариф: 10 руб за кг
+        return order.getWeight() * 10;
     }
 }

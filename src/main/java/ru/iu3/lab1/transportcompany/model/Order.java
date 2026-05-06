@@ -14,4 +14,5 @@ public class Order {
     private double weight;
     private OrderStatus status;
     private String vehicleId;
+    private double price;
 }

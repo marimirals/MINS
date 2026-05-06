@@ -72,19 +72,20 @@ public class CsvOrderRepository implements OrderRepository {
     }
 
     private String convertToCsv(Order order) {
-        return String.format(Locale.US, "%s,%s,%s,%.2f,%s,%s",
+        return String.format(Locale.US, "%s,%s,%s,%.2f,%s,%s,%.2f",
                 order.getId(),
                 order.getFrom() != null ? order.getFrom() : "",
                 order.getTo() != null ? order.getTo() : "",
                 order.getWeight(),
                 order.getStatus().name(),
-                order.getVehicleId() != null ? order.getVehicleId() : "");
+                order.getVehicleId() != null ? order.getVehicleId() : "",
+                order.getPrice());
     }
 
     private Order convertFromCsv(String line) {
         if (line == null || line.trim().isEmpty()) return null;
         String[] parts = line.split(",");
-        if (parts.length < 5) return null;
+        if (parts.length < 6) return null;
         try {
             Order order = new Order();
             order.setId(parts[0].trim());
@@ -92,7 +93,8 @@ public class CsvOrderRepository implements OrderRepository {
             order.setTo(parts[2].trim());
             order.setWeight(Double.parseDouble(parts[3].trim()));
             order.setStatus(OrderStatus.valueOf(parts[4].trim().toUpperCase()));
-            if (parts.length > 5 && !parts[5].trim().isEmpty()) order.setVehicleId(parts[5].trim());
+            order.setVehicleId(parts[5].trim());
+            order.setPrice(Double.parseDouble(parts[6].trim()));
             return order;
         } catch (Exception e) { return null; }
     }

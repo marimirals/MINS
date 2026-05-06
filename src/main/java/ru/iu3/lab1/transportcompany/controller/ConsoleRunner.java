@@ -1,11 +1,13 @@
-// ru.iu3.lab1.transportcompany.controller.ConsoleRunner
 package ru.iu3.lab1.transportcompany.controller;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import ru.iu3.lab1.transportcompany.exception.*;
 import ru.iu3.lab1.transportcompany.model.Order;
 import ru.iu3.lab1.transportcompany.model.OrderStatus;
+import ru.iu3.lab1.transportcompany.pricing.PriorityPricingStrategy;
+import ru.iu3.lab1.transportcompany.pricing.WeightBasedPricingStrategy;
 import ru.iu3.lab1.transportcompany.service.OrderService;
+import ru.iu3.lab1.transportcompany.service.OrderServiceImpl;
 import ru.iu3.lab1.transportcompany.service.VehicleService;
 import java.util.List;
 import java.util.Scanner;
@@ -16,9 +18,17 @@ public class ConsoleRunner implements CommandLineRunner {
     private final VehicleService vehicleService;
     private final Scanner scanner = new Scanner(System.in);
 
-    public ConsoleRunner(OrderService orderService, VehicleService vehicleService) {
+    private final WeightBasedPricingStrategy weightStrategy;
+    private final PriorityPricingStrategy priorityStrategy;
+
+    public ConsoleRunner(OrderService orderService,
+                         VehicleService vehicleService,
+                         WeightBasedPricingStrategy weightStrategy,
+                         PriorityPricingStrategy priorityStrategy) {
         this.orderService = orderService;
         this.vehicleService = vehicleService;
+        this.weightStrategy = weightStrategy;
+        this.priorityStrategy = priorityStrategy;
     }
 
     @Override
@@ -38,6 +48,8 @@ public class ConsoleRunner implements CommandLineRunner {
         System.out.println("4. Изменить статус заказа");
         System.out.println("5. Показать все заказы");
         System.out.println("6. Показать весь транспорт");
+        System.out.println("7. Отменить заказ");
+        System.out.println("8. Сменить стратегию расчета");
         System.out.println("0. Выход");
     }
 
@@ -49,6 +61,8 @@ public class ConsoleRunner implements CommandLineRunner {
             case 4 -> updateStatus();
             case 5 -> showAllOrders();
             case 6 -> showAllVehicles();
+            case 7 -> cancelOrder();
+            case 8 -> changePricingStrategy();
             case 0 -> { System.out.println("Пока!"); return false; }
             default -> System.out.println("Неверный выбор!");
         }
@@ -83,28 +97,28 @@ public class ConsoleRunner implements CommandLineRunner {
         String vehicleId = getInput("ID транспорта: ");
         try {
             orderService.assignVehicle(orderId, vehicleId);
-            System.out.println("✓ Транспорт назначен");
+            System.out.println("Транспорт назначен");
         } catch (TransportCompanyException e) {
-            System.out.println("✗ " + e.getMessage());
+            System.out.println(e.getMessage());
         } catch (Exception e) {
-            System.out.println("✗ Ошибка: " + e.getMessage());
+            System.out.println(e.getMessage());
         }
     }
 
     private void updateStatus() {
         String orderId = getInput("ID заказа: ");
-        System.out.println("Доступные статусы: CREATED, ASSIGNED, IN_TRANSIT, DELIVERED");
+        System.out.println("Доступные статусы: NEW, IN_PROGRESS, DELIVERED, CANCELLED");
         String statusStr = getInput("Новый статус: ");
         try {
             OrderStatus status = OrderStatus.valueOf(statusStr.trim().toUpperCase());
             orderService.updateStatus(orderId, status);
-            System.out.println("✓ Статус обновлен");
+            System.out.println("Статус обновлен");
         } catch (IllegalArgumentException e) {
-            System.out.println("✗ Неверный статус! Доступны: CREATED, ASSIGNED, IN_TRANSIT, DELIVERED");
+            System.out.println("Неверный статус! Доступны: NEW, IN_PROGRESS, DELIVERED, CANCELLED");
         } catch (TransportCompanyException e) {
-            System.out.println("✗ " + e.getMessage());
+            System.out.println(e.getMessage());
         } catch (Exception e) {
-            System.out.println("✗ Ошибка: " + e.getMessage());
+            System.out.println(e.getMessage());
         }
     }
 
@@ -114,14 +128,14 @@ public class ConsoleRunner implements CommandLineRunner {
             List<Order> orders = orderService.getAllOrders();
             if (orders.isEmpty()) { System.out.println("Заказов нет"); return; }
             for (Order o : orders) {
-                System.out.printf("ID: %s | %s → %s | %.2f кг | %s | Транспорт: %s%n",
+                System.out.printf("ID: %s | %s → %s | %.2f кг | %s | Транспорт: %s | Цена: %.2f%n",
                         o.getId(), o.getFrom(), o.getTo(), o.getWeight(),
-                        o.getStatus(), o.getVehicleId() != null ? o.getVehicleId() : "не назначен");
+                        o.getStatus(), o.getVehicleId() != null ? o.getVehicleId() : "не назначен", o.getPrice());
             }
         } catch (TransportCompanyException e) {
-            System.out.println("✗ " + e.getMessage());
+            System.out.println(e.getMessage());
         } catch (Exception e) {
-            System.out.println("✗ Ошибка: " + e.getMessage());
+            System.out.println(e.getMessage());
         }
     }
 
@@ -138,6 +152,7 @@ public class ConsoleRunner implements CommandLineRunner {
     }
 
     private String getInput(String prompt) { System.out.print(prompt); return scanner.nextLine(); }
+
     private int getIntInput(String prompt) {
         while (true) {
             try { System.out.print(prompt); return Integer.parseInt(scanner.nextLine()); }
@@ -150,22 +165,33 @@ public class ConsoleRunner implements CommandLineRunner {
             catch (NumberFormatException e) { System.out.println("Введите число!"); }
         }
     }
-    private String getSimpleErrorMessage(Throwable e) { // чтобы пути не показывались.
-        if (e instanceof StorageException) {
-            return "Ошибка работы с файлами данных. Проверьте права доступа к папке проекта.";
+
+    private void cancelOrder() {
+        String orderId = getInput("ID заказа для отмены: ");
+        try {
+            orderService.cancelOrder(orderId);
+            System.out.println("Заказ отменен");
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
-        String message = e.getMessage();
-        if (message == null || message.isEmpty()) {
-            return e.getClass().getSimpleName();
-        }
-        if (message.contains("enum constant")) {
-            String[] parts = message.split(" ");
-            if (parts.length >= 3) {
-                String enumClass = parts[2];
-                String shortName = enumClass.substring(enumClass.lastIndexOf('.') + 1);
-                return "Неверное значение: " + parts[3] + ". Доступные: " + shortName;
+    }
+
+    private void changePricingStrategy() {
+        System.out.println("1. По весу (10 руб/кг) [ТЕКУЩАЯ]");
+        System.out.println("2. Приоритетная (x1.5)");
+        int choice = getIntInput("Выбор: ");
+        try {
+            if (choice == 1) {
+                orderService.setPricingStrategy(weightStrategy);
+                System.out.println("Установлена стратегия: По весу");
+            } else if (choice == 2) {
+                orderService.setPricingStrategy(priorityStrategy);
+                System.out.println("Установлена стратегия: Приоритетная");
+            } else {
+                System.out.println("Неверный выбор");
             }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
-        return message;
     }
 }

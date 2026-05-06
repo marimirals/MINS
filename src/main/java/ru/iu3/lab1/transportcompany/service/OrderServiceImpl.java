@@ -5,7 +5,9 @@ import ru.iu3.lab1.transportcompany.exception.InvalidWeightException;
 import ru.iu3.lab1.transportcompany.exception.OrderNotFoundException;
 import ru.iu3.lab1.transportcompany.model.Order;
 import ru.iu3.lab1.transportcompany.model.OrderStatus;
+import ru.iu3.lab1.transportcompany.pricing.PricingContext;
 import ru.iu3.lab1.transportcompany.pricing.PricingStrategy;
+import ru.iu3.lab1.transportcompany.pricing.WeightBasedPricingStrategy;
 import ru.iu3.lab1.transportcompany.repository.OrderRepository;
 
 import java.util.List;
@@ -18,15 +20,14 @@ public class OrderServiceImpl implements OrderService {
     private final CsvOrderRepository orderRepository;
      */
     private final OrderRepository orderRepository;
-    private final PricingStrategy pricingStrategy;
+    private PricingStrategy currentStrategy;
     private final VehicleService vehicleService;
 
-    public OrderServiceImpl( /* CsvOrderRepository orderRepository, */
-                            OrderRepository orderRepository,
-                            PricingStrategy pricingStrategy,
+    public OrderServiceImpl(OrderRepository orderRepository,
+                            WeightBasedPricingStrategy defaultStrategy,
                             VehicleService vehicleService) {
         this.orderRepository = orderRepository;
-        this.pricingStrategy = pricingStrategy;
+        this.currentStrategy = defaultStrategy;
         this.vehicleService = vehicleService;
     }
 
@@ -37,7 +38,9 @@ public class OrderServiceImpl implements OrderService {
             throw new InvalidWeightException(weight);
         }
 
-        Order order = new Order(UUID.randomUUID().toString(), from, to, weight, OrderStatus.CREATED, null);
+        Order order = new Order(UUID.randomUUID().toString(), from, to, weight, OrderStatus.NEW, null, 0);
+
+        order.setPrice(currentStrategy.calculate(order));
 
         orderRepository.save(order);
 
@@ -67,7 +70,7 @@ public class OrderServiceImpl implements OrderService {
         vehicleService.getVehicleById(vehicleId);
 
         order.setVehicleId(vehicleId);
-        order.setStatus(OrderStatus.ASSIGNED);
+        order.setStatus(OrderStatus.IN_PROGRESS);
         orderRepository.save(order);
     }
 
@@ -86,7 +89,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        return pricingStrategy.calculate(order);
+        return order.getPrice();
 
         /* OOOOO (open-closed, хардкод в сервисе)
         if (order.getWeight() > 500) {
@@ -96,6 +99,23 @@ public class OrderServiceImpl implements OrderService {
         } else {
             return order.getWeight() * 10;
         }*/
+    }
+
+    public void setPricingStrategy(PricingStrategy strategy) {
+        this.currentStrategy = strategy;
+    }
+
+    @Override
+    public void cancelOrder(String orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+            throw new IllegalStateException("Нельзя отменить доставленный заказ");
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
     }
 
     @Override
