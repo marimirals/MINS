@@ -1,0 +1,32 @@
+package ru.iu3.lab1.transportcompany.state;
+
+import ru.iu3.lab1.transportcompany.model.Order;
+import ru.iu3.lab1.transportcompany.model.OrderStatus;
+
+public class CancelledState implements OrderState {
+
+    @Override
+    public void next(Order order) {
+        throw new IllegalStateException("Отмененный заказ нельзя изменить.");
+    }
+
+    @Override
+    public void cancel(Order order) {
+        throw new IllegalStateException("Заказ уже отменен.");
+    }
+
+    @Override
+    public String getName() {
+        return "CANCELLED";
+    }
+
+    @Override
+    public boolean canCancel() {
+        return false;
+    }
+
+    @Override
+    public boolean canProceed() {
+        return false;
+    }
+}

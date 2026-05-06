@@ -5,10 +5,13 @@ import ru.iu3.lab1.transportcompany.exception.InvalidWeightException;
 import ru.iu3.lab1.transportcompany.exception.OrderNotFoundException;
 import ru.iu3.lab1.transportcompany.model.Order;
 import ru.iu3.lab1.transportcompany.model.OrderStatus;
-import ru.iu3.lab1.transportcompany.pricing.PricingContext;
 import ru.iu3.lab1.transportcompany.pricing.PricingStrategy;
 import ru.iu3.lab1.transportcompany.pricing.WeightBasedPricingStrategy;
 import ru.iu3.lab1.transportcompany.repository.OrderRepository;
+import ru.iu3.lab1.transportcompany.state.CancelledState;
+import ru.iu3.lab1.transportcompany.state.DeliveredState;
+import ru.iu3.lab1.transportcompany.state.InProgressState;
+import ru.iu3.lab1.transportcompany.state.NewOrderState;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,7 +41,7 @@ public class OrderServiceImpl implements OrderService {
             throw new InvalidWeightException(weight);
         }
 
-        Order order = new Order(UUID.randomUUID().toString(), from, to, weight, OrderStatus.NEW, null, 0);
+        Order order = new Order(UUID.randomUUID().toString(), from, to, weight, OrderStatus.NEW, null, 0, new NewOrderState());
 
         order.setPrice(currentStrategy.calculate(order));
 
@@ -68,9 +71,16 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
         vehicleService.getVehicleById(vehicleId);
-
         order.setVehicleId(vehicleId);
-        order.setStatus(OrderStatus.IN_PROGRESS);
+
+        if (order.getState() != null) {
+            order.getState().next(order);
+        } else {
+            // Если state не инициализирован
+            order.setStatus(OrderStatus.IN_PROGRESS);
+            order.setState(new InProgressState());
+        }
+
         orderRepository.save(order);
     }
 
@@ -80,7 +90,22 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        order.setStatus(status);
+        // Используем паттерн State
+        if (order.getState() == null) {
+            initializeState(order);
+        }
+
+        // Определяем, какое действие выполнить
+        if (status == OrderStatus.CANCELLED) {
+            order.getState().cancel(order);
+        } else if (status == OrderStatus.IN_PROGRESS && order.getStatus() == OrderStatus.NEW) {
+            order.getState().next(order);
+        } else if (status == OrderStatus.DELIVERED && order.getStatus() == OrderStatus.IN_PROGRESS) {
+            order.getState().next(order);
+        } else if (status != order.getStatus()) {
+            throw new IllegalStateException("Недопустимый переход из " + order.getStatus() + " в " + status);
+        }
+
         orderRepository.save(order);
     }
 
@@ -110,12 +135,26 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        if (order.getStatus() == OrderStatus.DELIVERED) {
-            throw new IllegalStateException("Нельзя отменить доставленный заказ");
+        // Используем паттерн State
+        if (order.getState() == null) {
+            initializeState(order);
         }
 
-        order.setStatus(OrderStatus.CANCELLED);
+        order.getState().cancel(order);
         orderRepository.save(order);
+    }
+
+    private void initializeState(Order order) {
+        if (order.getStatus() == null) {
+            order.setState(new NewOrderState());
+        } else {
+            switch (order.getStatus()) {
+                case NEW -> order.setState(new NewOrderState());
+                case IN_PROGRESS -> order.setState(new InProgressState());
+                case DELIVERED -> order.setState(new DeliveredState());
+                case CANCELLED -> order.setState(new CancelledState());
+            }
+        }
     }
 
     @Override

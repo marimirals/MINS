@@ -3,6 +3,8 @@ package ru.iu3.lab1.transportcompany.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.iu3.lab1.transportcompany.state.NewOrderState;
+import ru.iu3.lab1.transportcompany.state.OrderState;
 
 @Data
 @AllArgsConstructor
@@ -15,4 +17,5 @@ public class Order {
     private OrderStatus status;
     private String vehicleId;
     private double price;
+    private OrderState state;
 }

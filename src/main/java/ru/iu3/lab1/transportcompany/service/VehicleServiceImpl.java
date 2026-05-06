@@ -26,5 +26,4 @@ public class VehicleServiceImpl implements VehicleService {
         return vehicleRepository.findAll();
     }
 
-    // findAvailableVehicle(double weight) удалён — capacity больше нет
 }
