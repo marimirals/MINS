@@ -4,10 +4,10 @@ import org.springframework.stereotype.Component;
 import ru.iu3.lab1.transportcompany.exception.*;
 import ru.iu3.lab1.transportcompany.model.Order;
 import ru.iu3.lab1.transportcompany.model.OrderStatus;
+import ru.iu3.lab1.transportcompany.observer.OrderObserver;
 import ru.iu3.lab1.transportcompany.pricing.PriorityPricingStrategy;
 import ru.iu3.lab1.transportcompany.pricing.WeightBasedPricingStrategy;
 import ru.iu3.lab1.transportcompany.service.OrderService;
-import ru.iu3.lab1.transportcompany.service.OrderServiceImpl;
 import ru.iu3.lab1.transportcompany.service.VehicleService;
 import java.util.List;
 import java.util.Scanner;
@@ -50,6 +50,7 @@ public class ConsoleRunner implements CommandLineRunner {
         System.out.println("6. Показать весь транспорт");
         System.out.println("7. Отменить заказ");
         System.out.println("8. Сменить стратегию расчета");
+        System.out.println("9. Показать подписчиков заказа");
         System.out.println("0. Выход");
     }
 
@@ -63,6 +64,7 @@ public class ConsoleRunner implements CommandLineRunner {
             case 6 -> showAllVehicles();
             case 7 -> cancelOrder();
             case 8 -> changePricingStrategy();
+            case 9 -> showOrderObservers();
             case 0 -> { System.out.println("Пока!"); return false; }
             default -> System.out.println("Неверный выбор!");
         }
@@ -192,6 +194,27 @@ public class ConsoleRunner implements CommandLineRunner {
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
+        }
+    }
+
+    private void showOrderObservers() {
+        String orderId = getInput("ID заказа: ");
+        try {
+            Order order = orderService.getAllOrders().stream()
+                    .filter(o -> o.getId().equals(orderId))
+                    .findFirst()
+                    .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+            System.out.println("\n=== Подписчики заказа " + orderId + " ===");
+            if (order.getObservers().isEmpty()) {
+                System.out.println("Нет подписчиков");
+            } else {
+                for (OrderObserver observer : order.getObservers()) {
+                    System.out.println("- " + observer.getNotifierType());
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Ошибка: " + e.getMessage());
         }
     }
 }

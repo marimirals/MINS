@@ -3,8 +3,12 @@ package ru.iu3.lab1.transportcompany.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.iu3.lab1.transportcompany.observer.OrderObserver;
 import ru.iu3.lab1.transportcompany.state.NewOrderState;
 import ru.iu3.lab1.transportcompany.state.OrderState;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -18,4 +22,19 @@ public class Order {
     private String vehicleId;
     private double price;
     private OrderState state;
+    private List<OrderObserver> observers = new ArrayList<>();
+
+    public void attachObserver(OrderObserver observer) {
+        observers.add(observer);
+    }
+
+    public void detachObserver(OrderObserver observer) {
+        observers.remove(observer);
+    }
+
+    public void notifyObservers(String message) {
+        for (OrderObserver observer : observers) {
+            observer.update(this, message);
+        }
+    }
 }

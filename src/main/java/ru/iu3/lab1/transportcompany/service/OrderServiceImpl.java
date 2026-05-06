@@ -5,6 +5,8 @@ import ru.iu3.lab1.transportcompany.exception.InvalidWeightException;
 import ru.iu3.lab1.transportcompany.exception.OrderNotFoundException;
 import ru.iu3.lab1.transportcompany.model.Order;
 import ru.iu3.lab1.transportcompany.model.OrderStatus;
+import ru.iu3.lab1.transportcompany.observer.EmailNotifier;
+import ru.iu3.lab1.transportcompany.observer.SmsNotifier;
 import ru.iu3.lab1.transportcompany.pricing.PricingStrategy;
 import ru.iu3.lab1.transportcompany.pricing.WeightBasedPricingStrategy;
 import ru.iu3.lab1.transportcompany.repository.OrderRepository;
@@ -13,6 +15,7 @@ import ru.iu3.lab1.transportcompany.state.DeliveredState;
 import ru.iu3.lab1.transportcompany.state.InProgressState;
 import ru.iu3.lab1.transportcompany.state.NewOrderState;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,13 +28,19 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private PricingStrategy currentStrategy;
     private final VehicleService vehicleService;
+    private final EmailNotifier emailNotifier;
+    private final SmsNotifier smsNotifier;
 
     public OrderServiceImpl(OrderRepository orderRepository,
                             WeightBasedPricingStrategy defaultStrategy,
-                            VehicleService vehicleService) {
+                            VehicleService vehicleService,
+                            EmailNotifier emailNotifier,
+                            SmsNotifier smsNotifier) {
         this.orderRepository = orderRepository;
         this.currentStrategy = defaultStrategy;
         this.vehicleService = vehicleService;
+        this.emailNotifier = emailNotifier;
+        this.smsNotifier = smsNotifier;
     }
 
     @Override
@@ -41,7 +50,10 @@ public class OrderServiceImpl implements OrderService {
             throw new InvalidWeightException(weight);
         }
 
-        Order order = new Order(UUID.randomUUID().toString(), from, to, weight, OrderStatus.NEW, null, 0, new NewOrderState());
+        Order order = new Order(UUID.randomUUID().toString(), from, to, weight, OrderStatus.NEW, null, 0, new NewOrderState(), new ArrayList<>());
+
+        order.attachObserver(emailNotifier);
+        order.attachObserver(smsNotifier);
 
         order.setPrice(currentStrategy.calculate(order));
 

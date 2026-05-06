@@ -15,6 +15,7 @@ public class InProgressState implements OrderState {
         // В пути -> Доставлен
         order.setStatus(OrderStatus.DELIVERED);
         order.setState(new DeliveredState());
+        order.notifyObservers("Ваш заказ доставлен! Спасибо за выбор нашей компании.");
         System.out.println("Заказ доставлен!");
     }
 
@@ -22,6 +23,7 @@ public class InProgressState implements OrderState {
     public void cancel(Order order) {
         order.setStatus(OrderStatus.CANCELLED);
         order.setState(new CancelledState());
+        order.notifyObservers("Заказ отменен во время доставки. Свяжитесь с поддержкой.");
         System.out.println("Заказ отменен");
     }
 

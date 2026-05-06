@@ -19,6 +19,7 @@ public class NewOrderState implements OrderState {
 
         order.setStatus(OrderStatus.IN_PROGRESS);
         order.setState(new InProgressState());
+        order.notifyObservers("Ваш заказ принят в работу и передан курьеру!");
         System.out.println("Заказ перешел в состояние: В ПУТИ");
     }
 
@@ -27,6 +28,7 @@ public class NewOrderState implements OrderState {
         // Новый заказ можно отменить
         order.setStatus(OrderStatus.CANCELLED);
         order.setState(new CancelledState());
+        order.notifyObservers("Ваш заказ был отменен.");
         System.out.println("Заказ отменен");
     }
 
