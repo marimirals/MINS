@@ -59,7 +59,8 @@ public class OrderServiceImpl implements OrderService {
 
         orderRepository.save(order);
 
-        /* SSSSS - single responsibility (создание заказа твечает за запись в файл)
+        // SSSSS - single responsibility (создание заказа отвечает за запись в файл)
+        /*
         try {
         Path file = Paths.get("orders.csv");
         String line = String.format(Locale.US, "%s,%s,%s,%.2f,%s,%s",
@@ -68,9 +69,9 @@ public class OrderServiceImpl implements OrderService {
                 order.getVehicleId() != null ? order.getVehicleId() : "");
         Files.write(file, Collections.singletonList(line),
                 StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-    } catch (IOException e) {
-        throw new RuntimeException("Ошибка записи", e);
-    }
+        } catch (IOException e) {
+            throw new RuntimeException("Ошибка записи", e);
+        }
 
          */
 
@@ -130,15 +131,6 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
         return order.getPrice();
-
-        /* OOOOO (open-closed, хардкод в сервисе)
-        if (order.getWeight() > 500) {
-            return order.getWeight() * 15;
-        } else if (order.getWeight() > 100) {
-            return order.getWeight() * 12;
-        } else {
-            return order.getWeight() * 10;
-        }*/
     }
 
     public void setPricingStrategy(PricingStrategy strategy) {
