@@ -7,6 +7,7 @@ import ru.iu3.lab1.transportcompany.model.OrderStatus;
 import ru.iu3.lab1.transportcompany.observer.OrderObserver;
 import ru.iu3.lab1.transportcompany.pricing.PriorityPricingStrategy;
 import ru.iu3.lab1.transportcompany.pricing.WeightBasedPricingStrategy;
+import ru.iu3.lab1.transportcompany.reporting.ReportMasterService;
 import ru.iu3.lab1.transportcompany.service.OrderService;
 import ru.iu3.lab1.transportcompany.service.VehicleService;
 import java.util.List;
@@ -21,14 +22,18 @@ public class ConsoleRunner implements CommandLineRunner {
     private final WeightBasedPricingStrategy weightStrategy;
     private final PriorityPricingStrategy priorityStrategy;
 
+    private final ReportMasterService reportMasterService;
+
     public ConsoleRunner(OrderService orderService,
                          VehicleService vehicleService,
                          WeightBasedPricingStrategy weightStrategy,
-                         PriorityPricingStrategy priorityStrategy) {
+                         PriorityPricingStrategy priorityStrategy,
+                         ReportMasterService reportMasterService) {
         this.orderService = orderService;
         this.vehicleService = vehicleService;
         this.weightStrategy = weightStrategy;
         this.priorityStrategy = priorityStrategy;
+        this.reportMasterService = reportMasterService;
     }
 
     @Override
@@ -51,6 +56,7 @@ public class ConsoleRunner implements CommandLineRunner {
         System.out.println("7. Отменить заказ");
         System.out.println("8. Сменить стратегию расчета");
         System.out.println("9. Показать подписчиков заказа");
+        System.out.println("10. Сгенерировать отчет (Лаба 3)");
         System.out.println("0. Выход");
     }
 
@@ -65,6 +71,7 @@ public class ConsoleRunner implements CommandLineRunner {
             case 7 -> cancelOrder();
             case 8 -> changePricingStrategy();
             case 9 -> showOrderObservers();
+            case 10 -> generateReport();
             case 0 -> { System.out.println("Пока!"); return false; }
             default -> System.out.println("Неверный выбор!");
         }
@@ -215,6 +222,16 @@ public class ConsoleRunner implements CommandLineRunner {
             }
         } catch (Exception e) {
             System.out.println("Ошибка: " + e.getMessage());
+        }
+    }
+
+    private void generateReport() {
+        System.out.println("\nГЕНЕРАЦИЯ ОТЧЕТА (Лаба 3)");
+        try {
+            reportMasterService.generateReport();
+        } catch (Exception e) {
+            System.out.println("Ошибка генерации отчета: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
