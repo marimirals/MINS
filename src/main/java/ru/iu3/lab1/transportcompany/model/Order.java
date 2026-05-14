@@ -22,6 +22,7 @@ public class Order {
     private String vehicleId;
     private double price;
     private OrderState state;
+
     private List<OrderObserver> observers = new ArrayList<>();
 
     public void attachObserver(OrderObserver observer) {

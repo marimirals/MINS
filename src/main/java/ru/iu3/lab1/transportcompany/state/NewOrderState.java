@@ -11,39 +11,30 @@ public class NewOrderState implements OrderState {
     }
 
     @Override
-    public void next(Order order) {
-        // Проверяем, что транспорт назначен
-        if (!canAssignVehicle() || order.getVehicleId().isEmpty()) {
-            throw new IllegalStateException("Нельзя перевести заказ в выполнение без назначенного транспорта!");
-        }
-
-        order.setStatus(OrderStatus.IN_PROGRESS);
-        order.setState(new InProgressState());
-        order.notifyObservers("Ваш заказ принят в работу и передан курьеру!");
-        System.out.println("Заказ перешел в состояние: В ПУТИ");
-    }
-
-    @Override
-    public void cancel(Order order) {
-        // Новый заказ можно отменить
-        order.setStatus(OrderStatus.CANCELLED);
-        order.setState(new CancelledState());
-        order.notifyObservers("Ваш заказ был отменен.");
-        System.out.println("Заказ отменен");
-    }
-
-    @Override
     public String getName() {
         return "NEW";
     }
 
     @Override
-    public boolean canCancel() {
-        return true; // Новый заказ можно отменить
+    public void next(Order order) {
+        if (order.getVehicleId() == null || order.getVehicleId().isEmpty()) {
+            throw new IllegalStateException("Нельзя перевести заказ в выполнение без назначенного транспорта!");
+        }
+        order.setStatus(OrderStatus.IN_PROGRESS);
+        order.setState(new InProgressState());
+
+        order.notifyObservers("Статус изменён: NEW → IN_PROGRESS");
+
+        System.out.println("Заказ перешел в состояние: В ПУТИ");
     }
 
     @Override
-    public boolean canProceed() {
-        return true; // Можно перейти в IN_PROGRESS
+    public void cancel(Order order) {
+        order.setStatus(OrderStatus.CANCELLED);
+        order.setState(new CancelledState());
+
+        order.notifyObservers("Статус изменён: NEW → CANCELLED");
+
+        System.out.println("Заказ отменен");
     }
 }

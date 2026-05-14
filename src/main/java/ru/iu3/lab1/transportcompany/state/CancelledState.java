@@ -25,13 +25,4 @@ public class CancelledState implements OrderState {
         return "CANCELLED";
     }
 
-    @Override
-    public boolean canCancel() {
-        return false;
-    }
-
-    @Override
-    public boolean canProceed() {
-        return false;
-    }
 }

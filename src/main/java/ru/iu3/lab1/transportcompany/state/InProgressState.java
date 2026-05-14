@@ -11,11 +11,17 @@ public class InProgressState implements OrderState {
     }
 
     @Override
+    public String getName() {
+        return "IN_PROGRESS";
+    }
+
+    @Override
     public void next(Order order) {
-        // В пути -> Доставлен
         order.setStatus(OrderStatus.DELIVERED);
         order.setState(new DeliveredState());
-        order.notifyObservers("Ваш заказ доставлен! Спасибо за выбор нашей компании.");
+
+        order.notifyObservers("Статус изменён: IN_PROGRESS → DELIVERED");
+
         System.out.println("Заказ доставлен!");
     }
 
@@ -23,22 +29,9 @@ public class InProgressState implements OrderState {
     public void cancel(Order order) {
         order.setStatus(OrderStatus.CANCELLED);
         order.setState(new CancelledState());
-        order.notifyObservers("Заказ отменен во время доставки. Свяжитесь с поддержкой.");
+
+        order.notifyObservers("Статус изменён: IN_PROGRESS → CANCELLED");
+
         System.out.println("Заказ отменен");
-    }
-
-    @Override
-    public String getName() {
-        return "IN_PROGRESS";
-    }
-
-    @Override
-    public boolean canCancel() {
-        return true;
-    }
-
-    @Override
-    public boolean canProceed() {
-        return true; // Можно доставить
     }
 }

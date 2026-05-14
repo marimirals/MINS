@@ -26,13 +26,4 @@ public class DeliveredState implements OrderState {
         return "DELIVERED";
     }
 
-    @Override
-    public boolean canCancel() {
-        return false; // Доставленный заказ отменить нельзя
-    }
-
-    @Override
-    public boolean canProceed() {
-        return false; // Это конечное состояние
-    }
 }

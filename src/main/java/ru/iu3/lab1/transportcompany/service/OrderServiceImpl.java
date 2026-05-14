@@ -5,8 +5,6 @@ import ru.iu3.lab1.transportcompany.exception.InvalidWeightException;
 import ru.iu3.lab1.transportcompany.exception.OrderNotFoundException;
 import ru.iu3.lab1.transportcompany.model.Order;
 import ru.iu3.lab1.transportcompany.model.OrderStatus;
-import ru.iu3.lab1.transportcompany.observer.EmailNotifier;
-import ru.iu3.lab1.transportcompany.observer.SmsNotifier;
 import ru.iu3.lab1.transportcompany.pricing.PricingStrategy;
 import ru.iu3.lab1.transportcompany.pricing.WeightBasedPricingStrategy;
 import ru.iu3.lab1.transportcompany.repository.OrderRepository;
@@ -14,6 +12,7 @@ import ru.iu3.lab1.transportcompany.state.CancelledState;
 import ru.iu3.lab1.transportcompany.state.DeliveredState;
 import ru.iu3.lab1.transportcompany.state.InProgressState;
 import ru.iu3.lab1.transportcompany.state.NewOrderState;
+import ru.iu3.lab1.transportcompany.observer.OrderFileUpdateObserver;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,19 +29,16 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private PricingStrategy currentStrategy;
     private final VehicleService vehicleService;
-    private final EmailNotifier emailNotifier;
-    private final SmsNotifier smsNotifier;
+    private final OrderFileUpdateObserver fileUpdateObserver;
 
     public OrderServiceImpl(OrderRepository orderRepository,
                             WeightBasedPricingStrategy defaultStrategy,
                             VehicleService vehicleService,
-                            EmailNotifier emailNotifier,
-                            SmsNotifier smsNotifier) {
+                            OrderFileUpdateObserver fileUpdateObserver) {
         this.orderRepository = orderRepository;
         this.currentStrategy = defaultStrategy;
         this.vehicleService = vehicleService;
-        this.emailNotifier = emailNotifier;
-        this.smsNotifier = smsNotifier;
+        this.fileUpdateObserver = fileUpdateObserver;
     }
 
     @Override
@@ -54,8 +50,9 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = new Order(UUID.randomUUID().toString(), from, to, weight, OrderStatus.NEW, null, 0, new NewOrderState(), new ArrayList<>());
 
-        order.attachObserver(emailNotifier);
-        order.attachObserver(smsNotifier);
+        order.setPrice(currentStrategy.calculate(order));
+
+        order.attachObserver(fileUpdateObserver);
 
         order.setPrice(currentStrategy.calculate(order));
 
@@ -85,6 +82,8 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
+        attachFileObserverIfMissing(order);
+
         // Проверяем существование транспорта
         vehicleService.getVehicleById(vehicleId);
 
@@ -107,6 +106,8 @@ public class OrderServiceImpl implements OrderService {
     public void updateStatus(String orderId, OrderStatus status) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        attachFileObserverIfMissing(order);
 
         // Используем паттерн State
         if (order.getState() == null) {
@@ -144,6 +145,8 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
+        attachFileObserverIfMissing(order);
+
         order.getState().cancel(order);
         orderRepository.save(order);
     }
@@ -164,5 +167,15 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
+    }
+
+    private void attachFileObserverIfMissing(Order order) {
+        // Прикрепляем, только если ещё не прикреплён
+        boolean alreadyAttached = order.getObservers().stream()
+                .anyMatch(o -> o instanceof OrderFileUpdateObserver);
+
+        if (!alreadyAttached) {
+            order.attachObserver(fileUpdateObserver);
+        }
     }
 }

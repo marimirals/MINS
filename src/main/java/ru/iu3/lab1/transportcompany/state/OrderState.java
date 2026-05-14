@@ -6,8 +6,6 @@ public interface OrderState {
     void next(Order order);           // Переход к следующему состоянию
     void cancel(Order order);         // Отмена заказа
     String getName();                 // Имя состояния
-    boolean canCancel();              // Можно ли отменить
-    boolean canProceed();             // Можно ли перейти дальше
     default boolean canAssignVehicle() {
         return false; // по умолчанию нельзя
     }
